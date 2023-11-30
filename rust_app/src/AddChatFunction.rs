@@ -65,6 +65,7 @@ async fn generate_response(input: &str) -> Result<String, Box<dyn std::error::Er
     // let res = step.run(&parameters!(input), &exec).await?;
     // let itinerary_advice: String = res.to_string();
     // Ok(itinerary_advice)
+    // fixme: suspect that gpt's api messes up the environment
     Ok("need to generate response and stuff".to_string())
 }
 
