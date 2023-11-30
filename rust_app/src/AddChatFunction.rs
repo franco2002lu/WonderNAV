@@ -83,6 +83,7 @@ async fn query_dynamodb(client: &Client, input: &str) -> Result<Option<String>, 
                 Ok(output) => Ok(Some(output.to_string())),
                 Err(_) => Ok(None)
 
+
                 //Err(_) => Ok(Some("Item attribute does not exist".to_string()))
             }
         } else {
