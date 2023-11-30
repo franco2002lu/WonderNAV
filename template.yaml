@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  WonderNAV
+
+  Sample SAM Template for WonderNAV
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Api:
+    TracingEnabled: true
+  Function:
+    Timeout: 3
+    MemorySize: 128
+
+Resources:
+  WonderNavApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Name: AddChatApi
+
+  AddChatFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: rust-cargolambda
+      BuildProperties:
+        Binary: AddChatFunction
+    Properties:
+      CodeUri: ./rust_app
+      Handler: bootstrap
+      Runtime: provided.al2
+      Description: Handler for the add chat operation
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref ChatsTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ChatsTable
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /chats
+            Method: post
+            RestApiId: !Ref WonderNavApiGateway
+
+  ChatsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub  ${AWS::StackName}-Chats
+      AttributeDefinitions:
+        - AttributeName: input
+          AttributeType: S
+      KeySchema:
+        - AttributeName: input
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  ChatsTable:
+    Description: Chats DynamoDB Table
+    Value: !Ref ChatsTable
+  ChatsApiEndpoint:
+    Description: API Gateway endpoint URL for the post lambda function
+    Value: !Sub "https://${WonderNavApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/chats/"
