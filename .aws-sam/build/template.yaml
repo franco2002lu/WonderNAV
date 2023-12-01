@@ -9,7 +9,7 @@ Globals:
   Api:
     TracingEnabled: true
   Function:
-    Timeout: 3
+    Timeout: 900
     MemorySize: 128
 Resources:
   WonderNavApiGateway:

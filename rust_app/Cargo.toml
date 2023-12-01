@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
+async-openai = "0.17.1"
 aws-config = "1.0.1"
 aws-sdk-dynamodb = "1.3.0"
 
