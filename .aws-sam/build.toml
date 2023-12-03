@@ -5,7 +5,7 @@ codeuri = "/Users/franco_lu/Desktop/SeniorCS/RustProjects/wondernav/rust_app"
 runtime = "provided.al2"
 architecture = "x86_64"
 handler = "bootstrap"
-source_hash = "b33b29ae8e5956e3ba9f56e31fe35e2b4e5aba1b99d67adb1076837d21b582e0"
+source_hash = "620a25e040a3d550d1aed2a381d59f905540e9a23025dbe4cd711c1c73643040"
 manifest_hash = ""
 packagetype = "Zip"
 functions = ["AddChatFunction"]
@@ -15,6 +15,16 @@ BuildMethod = "rust-cargolambda"
 
 [function_build_definitions.a75ad81b-04a9-49b2-92e2-a5a94c589434.metadata.BuildProperties]
 Binary = "AddChatFunction"
+
+
+
+
+
+
+
+
+
+
 
 
 

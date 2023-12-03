@@ -33,10 +33,16 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
             })
         },
         Ok(None) => {
-            //todo: need to get put this response into DynamoDB here (the body part)
+            let openai_resp = transform_result(generate_response(&request.body).await);
+            let put_response = client.put_item()
+                .table_name("WonderNAV-Chats")
+                .item("input", AttributeValue::S(request.body.clone()))
+                .item("output", AttributeValue::S(openai_resp.clone()))
+                .send()
+                .await?;
             Ok(Response {
                 statusCode: 200,
-                body: transform_result(generate_response(&request.body).await),
+                body: openai_resp,
             })
         },
         Err(e) => {
@@ -58,7 +64,7 @@ fn transform_result(result: Result<String, Box<dyn std::error::Error>>) -> Strin
 
 async fn generate_response(input: &str) -> Result<String, Box<dyn std::error::Error>> {
     //todo: need to implement error handling
-    let api_key = "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";
+    let api_key = "placeholder";
     let openai_config = OpenAIConfig::new()
         .with_api_key(api_key);
 
