@@ -13,7 +13,7 @@ struct Request {
 
 #[derive(Serialize)]
 struct Response {
-    statusCode: i32,
+    statusCode: i32, // AWS specifies for me to use camelCase for statusCode here
     body: String,
 }
 
@@ -47,8 +47,8 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
         },
         Err(e) => {
             Ok(Response {
-                statusCode: 200,
-                body: e.to_string(),
+                statusCode: 500,
+                body: format!("Error querying DynamoDB: {}", e),
             })
             //Err(anyhow!("Error querying DynamoDB").into())
         },
@@ -64,7 +64,7 @@ fn transform_result(result: Result<String, Box<dyn std::error::Error>>) -> Strin
 
 async fn generate_response(input: &str) -> Result<String, Box<dyn std::error::Error>> {
     //todo: need to implement error handling
-    let api_key = "placeholder";
+    let api_key = "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";
     let openai_config = OpenAIConfig::new()
         .with_api_key(api_key);
 
@@ -78,24 +78,22 @@ async fn generate_response(input: &str) -> Result<String, Box<dyn std::error::Er
         .prompt(openai_prompt)
         .max_tokens(900_u16)
         .build()
-        .unwrap();
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
 
     let openai_response = openai_client
         .completions()
         .create(openai_request)
         .await
-        .unwrap();
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
 
     let output = &openai_response.choices[0].text;
     Ok(output.to_string())
 }
 
 async fn query_dynamodb(client: &Client, input: &str) -> Result<Option<String>, DynamoError> {
-    //let input_attr = AttributeValue::S(input.to_string());
-
     let resp = client.get_item()
         .table_name("WonderNAV-Chats")
-        .key("input", AttributeValue::S(input.to_string())) // Pass the key name and value directly
+        .key("input", AttributeValue::S(input.to_string()))
         .send()
         .await?;
 
@@ -103,8 +101,7 @@ async fn query_dynamodb(client: &Client, input: &str) -> Result<Option<String>, 
         if let Some(output_attr) = item.get("output") {
             match output_attr.as_s() {
                 Ok(output) => Ok(Some(output.to_string())),
-                Err(_) => Ok(None)
-                //Err(_) => Ok(Some("Item attribute does not exist".to_string()))
+                Err(_) => Ok(Some("Item attribute does not exist".to_string()))
             }
         } else {
             Ok(None)
