@@ -18,5 +18,5 @@ tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
 
 [[bin]]
-name = "AddChatFunction"
-path = "src/AddChatFunction.rs"
+name = "add_chat_function"
+path = "src/add_chat_function.rs"

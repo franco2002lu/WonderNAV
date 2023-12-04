@@ -25,7 +25,7 @@ Resources:
     Metadata:
       BuildMethod: rust-cargolambda
       BuildProperties:
-        Binary: AddChatFunction
+        Binary: add_chat_function
     Properties:
       CodeUri: ./rust_app
       Handler: bootstrap

@@ -4,7 +4,6 @@ use aws_sdk_dynamodb::types::AttributeValue;
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
 use aws_config::BehaviorVersion;
-// use anyhow::anyhow;
 
 #[derive(Deserialize)]
 struct Request {
@@ -34,7 +33,7 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
         },
         Ok(None) => {
             let openai_resp = transform_result(generate_response(&request.body).await);
-            let put_response = client.put_item()
+            let _put_response = client.put_item()
                 .table_name("WonderNAV-Chats")
                 .item("input", AttributeValue::S(request.body.clone()))
                 .item("output", AttributeValue::S(openai_resp.clone()))
@@ -50,7 +49,6 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
                 statusCode: 500,
                 body: format!("Error querying DynamoDB: {}", e),
             })
-            //Err(anyhow!("Error querying DynamoDB").into())
         },
     }
 }
@@ -63,8 +61,7 @@ fn transform_result(result: Result<String, Box<dyn std::error::Error>>) -> Strin
 }
 
 async fn generate_response(input: &str) -> Result<String, Box<dyn std::error::Error>> {
-    //todo: need to implement error handling
-    let api_key = "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";
+    let api_key = "api key placeholder"; //todo: api key here
     let openai_config = OpenAIConfig::new()
         .with_api_key(api_key);
 
