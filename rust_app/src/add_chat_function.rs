@@ -1,9 +1,11 @@
-use async_openai::{types::CreateCompletionRequestArgs, Client as OpenAIClient, config::OpenAIConfig};
-use aws_sdk_dynamodb::{Client, Error as DynamoError};
+use async_openai::{
+    config::OpenAIConfig, types::CreateCompletionRequestArgs, Client as OpenAIClient,
+};
+use aws_config::BehaviorVersion;
 use aws_sdk_dynamodb::types::AttributeValue;
+use aws_sdk_dynamodb::{Client, Error as DynamoError};
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
-use aws_config::BehaviorVersion;
 
 #[derive(Deserialize)]
 struct Request {
@@ -25,15 +27,14 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
 
     // Query DynamoDB
     match query_dynamodb(&client, &request.body).await {
-        Ok(Some(res)) => {
-            Ok(Response {
-                statusCode: 200,
-                body: res.to_string(),
-            })
-        },
+        Ok(Some(res)) => Ok(Response {
+            statusCode: 200,
+            body: res.to_string(),
+        }),
         Ok(None) => {
             let openai_resp = transform_result(generate_response(&request.body).await);
-            let _put_response = client.put_item()
+            let _put_response = client
+                .put_item()
                 .table_name("WonderNAV-Chats")
                 .item("input", AttributeValue::S(request.body.clone()))
                 .item("output", AttributeValue::S(openai_resp.clone()))
@@ -43,13 +44,11 @@ async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error
                 statusCode: 200,
                 body: openai_resp,
             })
-        },
-        Err(e) => {
-            Ok(Response {
-                statusCode: 500,
-                body: format!("Error querying DynamoDB: {}", e),
-            })
-        },
+        }
+        Err(e) => Ok(Response {
+            statusCode: 500,
+            body: format!("Error querying DynamoDB: {}", e),
+        }),
     }
 }
 
@@ -62,8 +61,7 @@ fn transform_result(result: Result<String, Box<dyn std::error::Error>>) -> Strin
 
 async fn generate_response(input: &str) -> Result<String, Box<dyn std::error::Error>> {
     let api_key = "api key placeholder"; //todo: api key here
-    let openai_config = OpenAIConfig::new()
-        .with_api_key(api_key);
+    let openai_config = OpenAIConfig::new().with_api_key(api_key);
 
     let openai_client = OpenAIClient::with_config(openai_config);
     let mut openai_prompt = "You are an experienced travel agent that will provide an in-depth itinerary based on relevant online articles. You will provide the itinerary based on the location and duration entered by the user. Include at least 3 activities a day. Do not include any other suggestions or comments before or after the itinerary."
@@ -88,7 +86,8 @@ async fn generate_response(input: &str) -> Result<String, Box<dyn std::error::Er
 }
 
 async fn query_dynamodb(client: &Client, input: &str) -> Result<Option<String>, DynamoError> {
-    let resp = client.get_item()
+    let resp = client
+        .get_item()
         .table_name("WonderNAV-Chats")
         .key("input", AttributeValue::S(input.to_string()))
         .send()
@@ -98,14 +97,14 @@ async fn query_dynamodb(client: &Client, input: &str) -> Result<Option<String>, 
         if let Some(output_attr) = item.get("output") {
             match output_attr.as_s() {
                 Ok(output) => Ok(Some(output.to_string())),
-                Err(_) => Ok(Some("Item attribute does not exist".to_string()))
+                Err(_) => Ok(Some("Item attribute does not exist".to_string())),
             }
         } else {
             Ok(None)
         }
     } else {
         Ok(None)
-    }
+    };
 }
 
 #[tokio::main]
